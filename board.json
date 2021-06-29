@@ -1,5 +1,5 @@
 {
-  "ally": [
+  "positive": [
     "plate",
     "straw",
     "press",
@@ -10,24 +10,28 @@
     "washer",
     "mass"
   ],
-  "opponent": [
+  "negative": [
     "hood",
-    "cross",
-    "point",
     "bow",
-    "pass",
     "cell",
-    "theater",
-    "bell",
     "scale",
     "ambulance",
     "thumb",
-    "bottle",
     "scorpion",
-    "wave",
     "day",
-    "revolution",
     "turkey",
     "fair"
+  ],
+  "neutral": [
+    "cross",
+    "point",
+    "pass",
+    "bell",
+    "bottle",
+    "wave",
+    "revolution"
+  ],
+  "black": [
+    "theater"
   ]
 }
