@@ -1,0 +1,1 @@
+Find a prebuilt word2vec model and throw it in this directory

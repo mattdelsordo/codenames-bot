@@ -1,0 +1,33 @@
+{
+  "ally": [
+    "plate",
+    "straw",
+    "press",
+    "force",
+    "laser",
+    "scorpion",
+    "day",
+    "washer",
+    "mass"
+  ],
+  "opponent": [
+    "hood",
+    "cross",
+    "point",
+    "bow",
+    "pass",
+    "cell",
+    "theater",
+    "bell",
+    "scale",
+    "ambulance",
+    "thumb",
+    "bottle",
+    "scorpion",
+    "wave",
+    "day",
+    "revolution",
+    "turkey",
+    "fair"
+  ]
+}
