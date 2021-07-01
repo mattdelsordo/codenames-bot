@@ -18,6 +18,12 @@ class Board:
     def get_all(self):
         return list(self.positive | self.negative | self.neutral | self.black)
 
+    def get_self(self):
+        return list(self.positive)
+
+    def get_other(self):
+        return list(self.negative | self.neutral | self.black)
+
     def sort(self, words):
         sorted_words = {"positive": [], "negative": []}
         for w in words:

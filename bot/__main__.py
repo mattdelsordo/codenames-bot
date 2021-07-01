@@ -14,8 +14,13 @@ def main():
 
     board = Board(board_path)
     model = Model(data_path)
-    result = model.run(board)
-    print(result)
+
+    if args.dbscan:
+        print(model.run_DBSCAN(board))
+    elif args.kmeans:
+        print(model.run_KMeans(board, args.kmeans))
+    else:
+        print("Unrecognized clustering algorithm")
 
 
 if __name__ == '__main__':
