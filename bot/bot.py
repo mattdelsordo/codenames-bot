@@ -1,15 +1,15 @@
 import gensim
+import gensim.downloader as api
 from sklearn.cluster import DBSCAN, KMeans
 import numpy
-from math import ceil
 
 
 class Model:
     def __init__(self, data_path):
         # https://radimrehurek.com/gensim/models/word2vec.html
         print("Loading model...")
-        self.model: gensim.models.KeyedVectors = gensim.models.KeyedVectors.load_word2vec_format(data_path, binary=True,
-                                                                                                 limit=500000)
+        # https://github.com/RaRe-Technologies/gensim-data
+        self.model: gensim.models.KeyedVectors = api.load(data_path)
 
     def words_to_vectors(self, words):
         return [self.model.get_vector(w) for w in words]
