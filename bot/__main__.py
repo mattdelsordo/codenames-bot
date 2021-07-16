@@ -1,7 +1,7 @@
 from pathlib import Path
 from args import init_args
 from board import Board
-from bot import Model
+from bot import DBSCANModel, KMeansModel
 
 BOARD_DIR = ""
 DATA_DIR = "data"
@@ -13,12 +13,13 @@ def main():
     board_path = Path(__file__).parent.parent.joinpath(BOARD_DIR, args.board_path)
 
     board = Board(board_path)
-    model = Model(args.data_path)
 
     if args.dbscan:
-        print(model.run_DBSCAN(board))
+        model = DBSCANModel(args.data_path)
+        print(model.run(board))
     elif args.kmeans:
-        print(model.run_KMeans(board, args.kmeans))
+        model = KMeansModel(args.data_path, args.kmeans)
+        print(model.run(board))
     else:
         print("Unrecognized clustering algorithm")
 
