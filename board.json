@@ -1,37 +1,35 @@
 {
-  "positive": [
-    "plate",
-    "straw",
-    "press",
-    "force",
-    "laser",
-    "scorpion",
-    "day",
-    "washer",
-    "mass"
-  ],
   "negative": [
-    "hood",
-    "bow",
-    "cell",
-    "scale",
+    "diamond",
+    "saturn",
+    "card",
+    "pyramid",
+    "link",
+    "battery",
+    "washer",
     "ambulance",
-    "thumb",
-    "scorpion",
+    "check"
+  ],
+  "positive": [
+    "port",
     "day",
-    "turkey",
-    "fair"
+    "czech",
+    "atlantis",
+    "root",
+    "vet",
+    "dress",
+    "olympus"
   ],
   "neutral": [
-    "cross",
-    "point",
-    "pass",
-    "bell",
-    "bottle",
-    "wave",
-    "revolution"
+    "ham",
+    "comic",
+    "cat",
+    "alien",
+    "opera",
+    "parachute",
+    "litter"
   ],
   "black": [
-    "theater"
+    "canada"
   ]
 }

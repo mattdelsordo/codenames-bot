@@ -5,6 +5,7 @@ import numpy
 from abc import ABC, abstractmethod
 import time
 
+
 class Model(ABC):
     def __init__(self, data_path):
         start = time.time()
@@ -24,7 +25,7 @@ class Model(ABC):
             if str(label) not in clusters:
                 clusters[str(label)] = []
             clusters[str(label)].append(words[index])
-        return clusters
+        return list(clusters.values())
 
     @abstractmethod
     def cluster(self, words):
@@ -34,26 +35,55 @@ class Model(ABC):
         return numpy.mean([self.model.similarity(x, y) for x in words for y in words if x is not y])
 
     def rank_clusters(self, clusters):
-        return {k: self.average_group_similarity(v) if len(v) > 1 else 0 for k, v in clusters.items()}
+        return [self.average_group_similarity(v) if len(v) > 1 else 0 for v in clusters]
 
     def get_most_similar_cluster(self, clusters):
         ranked = self.rank_clusters(clusters)
-        return clusters[max(ranked.keys(), key=lambda k: ranked[k])]
+        return clusters[ranked.index(max(ranked))]
 
-    def find_matches(self, positive, negative):
-        return self.model.most_similar(positive, negative, topn=10)
+    # def find_matches(self, positive, negative):
+    #     # https://radimrehurek.com/gensim/models/keyedvectors.html
+    #     # TODO: adding negatives seems to bias model against ENGLISH, find english only model
+    #     return self.model.most_similar(negative=negative, topn=10)
+    #     # return self.model.most_similar(positive, topn=10)
 
-    def organize(self, board, clusters):
-        most_similar_cluster = self.get_most_similar_cluster(clusters)
-        sorted_words = board.sort(most_similar_cluster)
-        matches = self.find_matches(sorted_words["positive"], board.get_other())
-        # filter out words that are superstrings of words on the board or contain more than one word
+    def filter_words(self, matches, board):
+        # remove words that are superstrings of words on the board or have spaces
         filtered = [m for m in matches if "_" not in m[0] and not board.is_superstring(m[0])]
-        return filtered, sorted_words["positive"]
+        # TODO: remove function words?
+        # might be useful: https://github.com/dariusk/corpora/tree/master/data/words
+        return filtered
+
+    def find_farthest_word(self, matches, negative_words):
+        distances = [(m, self.model.distances(m, negative_words)) for m in matches]
+        farthest = max(distances, key=lambda k: numpy.mean(k[1]))
+        print("Farthest", farthest)
+        return farthest[0]
 
     def run(self, board):
-        clusters = self.cluster(board.get_self())
-        return self.organize(board, clusters)
+        words = board.get_self()
+        # 1. find best cluster of options
+        clusters = self.cluster(words)
+        grouped = self.group_clusters(words, clusters)
+        print("Clusters of size > 1:")
+        for c in [cluster for cluster in grouped if len(cluster) > 1]:
+            print(c)
+        best_cluster = self.get_most_similar_cluster(grouped)
+        print("\nFor cluster", best_cluster)
+
+        # 2. find matches for cluster
+        sorted_words = board.sort(best_cluster)
+        matches = self.model.most_similar(positive=sorted_words["positive"], topn=10)
+
+        # 3. filter/sanitize matches
+        filtered = self.filter_words(matches, board)
+        print("Filtered matches")
+        for match in filtered:
+            print(match)
+
+        # 4. return match thats farthest from the negative words
+        farthest = self.find_farthest_word([f[0] for f in filtered], board.get_other())
+        print("GUESS:", farthest)
 
 
 class KMeansModel(Model):
@@ -64,13 +94,10 @@ class KMeansModel(Model):
     def cluster(self, words):
         print("Running KMeans...")
         vectors = self.words_to_vectors(words)
-        # get # of clusters of the specified size
-        # cluster_count = ceil(len(vectors) / min(len(vectors), cluster_size))
+        # get # of groups, should leave enough for one group of N
         cluster_count = len(vectors) - self.cluster_size + 1
-        print("cluster count =", cluster_count)
         labelled = KMeans(n_clusters=cluster_count).fit_predict(vectors)
-        print(words, labelled)
-        return self.group_clusters(words, labelled)
+        return labelled
 
 
 class DBSCANModel(Model):
@@ -86,4 +113,4 @@ class DBSCANModel(Model):
         print("Running DBSCAN...")
         vectors = self.words_to_vectors(words)
         labelled = DBSCAN(eps=3.1, min_samples=1).fit_predict(vectors)
-        return self.group_clusters(words, labelled)
+        return labelled

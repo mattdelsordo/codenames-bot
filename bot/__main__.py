@@ -16,10 +16,10 @@ def main():
 
     if args.dbscan:
         model = DBSCANModel(args.data_path)
-        print(model.run(board))
+        model.run(board)
     elif args.kmeans:
         model = KMeansModel(args.data_path, args.kmeans)
-        print(model.run(board))
+        model.run(board)
     else:
         print("Unrecognized clustering algorithm")
 
