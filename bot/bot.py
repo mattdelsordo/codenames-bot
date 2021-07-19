@@ -5,9 +5,8 @@ import numpy
 import time
 
 
-class Model():
-    def __init__(self, data_path, board):
-        self.board = board
+class Model:
+    def __init__(self, data_path):
         start = time.time()
         # https://radimrehurek.com/gensim/models/word2vec.html
         print("Loading model", data_path)
@@ -27,12 +26,11 @@ class Model():
             clusters[str(label)].append(words[index])
         return list(clusters.values())
 
-    def cluster(self, words):
+    def cluster(self, words, guess):
         print("Default clustering for", words)
         cluster = words.copy()
-        while len(cluster) > min(self.board.guess, len(words)):
+        while len(cluster) > min(guess, len(words)):
             no_match = self.model.doesnt_match(cluster)
-            print("Removing", no_match)
             cluster.remove(no_match)
         # print("cluster", cluster)
         # return numpy.array([(c, 0) for c in cluster])
@@ -56,7 +54,7 @@ class Model():
 
     def filter_words(self, matches, board):
         # remove words that are superstrings of words on the board or have spaces
-        filtered = [m for m in matches if "_" not in m[0] and not board.is_superstring(m[0])]
+        filtered = [m for m in matches if "_" not in m and not board.is_superstring(m)]
         # TODO: remove function words?
         # might be useful: https://github.com/dariusk/corpora/tree/master/data/words
         return filtered
@@ -64,45 +62,46 @@ class Model():
     def find_farthest_word(self, matches, negative_words):
         distances = [(m, self.model.distances(m, negative_words)) for m in matches]
         farthest = max(distances, key=lambda k: numpy.mean(k[1]))
-        print("Farthest", farthest)
         return farthest[0]
 
-    def run(self):
-        words = self.board.get_good_options()
+    def find_most_similar(self, words):
+        similar = self.model.most_similar(positive=words, topn=10)
+        return [s[0] for s in similar]
+
+    def run(self, board):
+        words = board.get_good_options()
         # 1. find best cluster of options
-        best_cluster = self.cluster(words)
+        best_cluster = self.cluster(words, board.guess)
         # grouped = self.group_clusters(words, clusters)
         # print("Clusters of size > 1:")
         # for c in [cluster for cluster in grouped if len(cluster) > 1]:
         #     print(c)
         # best_cluster = self.get_most_similar_cluster(grouped)
-        print("\nFor cluster", best_cluster)
+        print("For cluster", best_cluster)
 
         # 2. find matches for cluster
         # sorted_words = board.sort(best_cluster)
-        matches = self.model.most_similar(positive=best_cluster, topn=10)
+        matches = self.find_most_similar(best_cluster)
 
         # 3. filter/sanitize matches
-        filtered = self.filter_words(matches, self.board)
-        print("Filtered matches")
-        for match in filtered:
-            print(match)
+        filtered = self.filter_words(matches, board)
+        print("Filtered matches:", filtered)
 
         # 4. return match thats farthest from the negative words
-        farthest = self.find_farthest_word([f[0] for f in filtered], self.board.get_bad_options())
+        farthest = self.find_farthest_word(filtered, board.get_bad_options())
         print("GUESS:", farthest)
 
 
 class KMeansModel(Model):
-    def __init__(self, data_path, board, cluster_size):
-        super(KMeansModel, self).__init__(data_path, board)
+    def __init__(self, data_path, cluster_size):
+        super(KMeansModel, self).__init__(data_path)
         self.cluster_size = cluster_size
 
-    def cluster(self, words):
+    def cluster(self, words, guess):
         print("Running KMeans...")
         vectors = self.words_to_vectors(words)
         # get # of groups, should leave enough for one group of N
-        cluster_count = len(vectors) - self.cluster_size + 1
+        cluster_count = len(vectors) - guess + 1
         labelled = KMeans(n_clusters=cluster_count).fit_predict(vectors)
         return labelled
 
@@ -116,7 +115,7 @@ class DBSCANModel(Model):
     # label of -1 === noise
     # TODO: figure out good values for eps and min_samples that result in non- -1 values
     # eps=4 is way too high, <3 is too low, or maybe these words are just too sparse
-    def cluster(self, words):
+    def cluster(self, words, guess):
         print("Running DBSCAN...")
         vectors = self.words_to_vectors(words)
         labelled = DBSCAN(eps=3.1, min_samples=1).fit_predict(vectors)
