@@ -1,5 +1,7 @@
 {
-  "negative": [
+  "turn": "blue",
+  "guess": "3",
+  "red": [
     "diamond",
     "saturn",
     "card",
@@ -10,7 +12,7 @@
     "ambulance",
     "check"
   ],
-  "positive": [
+  "blue": [
     "port",
     "day",
     "czech",
@@ -20,7 +22,7 @@
     "dress",
     "olympus"
   ],
-  "neutral": [
+  "white": [
     "ham",
     "comic",
     "cat",

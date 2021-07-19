@@ -10,31 +10,41 @@ def load_board(path):
 class Board:
     def __init__(self, path):
         data = load_board(path)
-        self.positive = set(data["positive"])
-        self.negative = set(data["negative"])
-        self.neutral = set(data["neutral"])
+        self.turn = data["turn"]
+        self.red = set(data["red"])
+        self.blue = set(data["blue"])
+        self.white = set(data["white"])
         self.black = set(data["black"])
+        self.guess = int(data["guess"])
+
+    def get_own(self):
+        return self.blue if self.turn == "blue" else self.red
+
+    def get_opponent(self):
+        return self.red if self.turn == "blue" else self.blue
+
+    def get_good_options(self):
+        return list(self.get_own())
+
+    def get_bad_options(self):
+        return list(self.get_opponent() | self.white | self.black)
 
     def get_all(self):
-        return list(self.positive | self.negative | self.neutral | self.black)
+        return self.get_good_options() + self.get_bad_options()
 
-    def get_self(self):
-        return list(self.positive)
-
-    def get_other(self):
-        return list(self.negative | self.neutral | self.black)
-
-    def sort(self, words):
-        sorted_words = {"positive": [], "negative": []}
-        for w in words:
-            if w in self.positive:
-                sorted_words["positive"].append(w)
-            else:
-                sorted_words["negative"].append(w)
-        return sorted_words
+    # def sort(self, words):
+    #     sorted_words = {"positive": [], "negative": []}
+    #     for w in words:
+    #         if w in self.positive:
+    #             sorted_words["positive"].append(w)
+    #         else:
+    #             sorted_words["negative"].append(w)
+    #     return sorted_words
 
     def is_superstring(self, word):
         for w in self.get_all():
-            if word.lower().strip() in w.lower():
+            stripped_word = word.lower().strip()
+            stripped_w = w.lower()
+            if stripped_word in stripped_w or stripped_w in stripped_word:
                 return True
         return False

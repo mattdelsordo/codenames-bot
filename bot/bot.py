@@ -2,12 +2,12 @@ import gensim
 import gensim.downloader as api
 from sklearn.cluster import DBSCAN, KMeans
 import numpy
-from abc import ABC, abstractmethod
 import time
 
 
-class Model(ABC):
-    def __init__(self, data_path):
+class Model():
+    def __init__(self, data_path, board):
+        self.board = board
         start = time.time()
         # https://radimrehurek.com/gensim/models/word2vec.html
         print("Loading model", data_path)
@@ -27,9 +27,16 @@ class Model(ABC):
             clusters[str(label)].append(words[index])
         return list(clusters.values())
 
-    @abstractmethod
     def cluster(self, words):
-        pass
+        print("Default clustering for", words)
+        cluster = words.copy()
+        while len(cluster) > min(self.board.guess, len(words)):
+            no_match = self.model.doesnt_match(cluster)
+            print("Removing", no_match)
+            cluster.remove(no_match)
+        # print("cluster", cluster)
+        # return numpy.array([(c, 0) for c in cluster])
+        return cluster
 
     def average_group_similarity(self, words):
         return numpy.mean([self.model.similarity(x, y) for x in words for y in words if x is not y])
@@ -60,35 +67,35 @@ class Model(ABC):
         print("Farthest", farthest)
         return farthest[0]
 
-    def run(self, board):
-        words = board.get_self()
+    def run(self):
+        words = self.board.get_good_options()
         # 1. find best cluster of options
-        clusters = self.cluster(words)
-        grouped = self.group_clusters(words, clusters)
-        print("Clusters of size > 1:")
-        for c in [cluster for cluster in grouped if len(cluster) > 1]:
-            print(c)
-        best_cluster = self.get_most_similar_cluster(grouped)
+        best_cluster = self.cluster(words)
+        # grouped = self.group_clusters(words, clusters)
+        # print("Clusters of size > 1:")
+        # for c in [cluster for cluster in grouped if len(cluster) > 1]:
+        #     print(c)
+        # best_cluster = self.get_most_similar_cluster(grouped)
         print("\nFor cluster", best_cluster)
 
         # 2. find matches for cluster
-        sorted_words = board.sort(best_cluster)
-        matches = self.model.most_similar(positive=sorted_words["positive"], topn=10)
+        # sorted_words = board.sort(best_cluster)
+        matches = self.model.most_similar(positive=best_cluster, topn=10)
 
         # 3. filter/sanitize matches
-        filtered = self.filter_words(matches, board)
+        filtered = self.filter_words(matches, self.board)
         print("Filtered matches")
         for match in filtered:
             print(match)
 
         # 4. return match thats farthest from the negative words
-        farthest = self.find_farthest_word([f[0] for f in filtered], board.get_other())
+        farthest = self.find_farthest_word([f[0] for f in filtered], self.board.get_bad_options())
         print("GUESS:", farthest)
 
 
 class KMeansModel(Model):
-    def __init__(self, data_path, cluster_size):
-        super(KMeansModel, self).__init__(data_path)
+    def __init__(self, data_path, board, cluster_size):
+        super(KMeansModel, self).__init__(data_path, board)
         self.cluster_size = cluster_size
 
     def cluster(self, words):
